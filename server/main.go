@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/rahul-cse/research-summary/pdf"
 )
 
 func main() {
@@ -11,10 +13,43 @@ func main() {
 
 	router.POST("/upload", func(c *gin.Context) {
 
+		file, err := c.FormFile("file")
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "No file uploaded",
+			})
+			return
+		}
+
+		uploadedFile, err := file.Open()
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Could not open uploaded file",
+			})
+			return
+		}
+
+		defer uploadedFile.Close()
+
+		text, err := pdf.ExtractText(uploadedFile)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Could not extract PDF text",
+			})
+			return
+		}
+
+
 		c.JSON(http.StatusOK, gin.H{
-			"message": "Upload endpoint working",
+			"message":  "File uploaded successfully",
+			"filename": file.Filename,
+			"text": text,
 		})
 	})
+
 
 	router.Run(":7070")
 }
