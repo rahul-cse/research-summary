@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -61,5 +63,10 @@ func main() {
 		})
 	})
 
-	router.Run(":7070")
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		port = "7070"
+	}
+	router.Run("0.0.0.0:" + port)
 }
