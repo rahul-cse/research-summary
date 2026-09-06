@@ -5,11 +5,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/gin-contrib/cors"
+
 	"github.com/rahul-cse/research-summary/pdf"
+
+	"github.com/rahul-cse/research-summary/text"
 )
 
 func main() {
 	router := gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders: []string{"Origin", "Content-Type"},
+	}))
 
 	router.POST("/upload", func(c *gin.Context) {
 
@@ -33,7 +43,7 @@ func main() {
 
 		defer uploadedFile.Close()
 
-		text, err := pdf.ExtractText(uploadedFile)
+		rawText, err := pdf.ExtractText(uploadedFile)
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -42,14 +52,14 @@ func main() {
 			return
 		}
 
+		cleanedText := text.Clean(rawText)
 
 		c.JSON(http.StatusOK, gin.H{
 			"message":  "File uploaded successfully",
 			"filename": file.Filename,
-			"text": text,
+			"text":     cleanedText,
 		})
 	})
-
 
 	router.Run(":7070")
 }
