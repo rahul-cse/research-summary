@@ -3,15 +3,21 @@ package main
 import (
 	"os"
 
+	"log"
+
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/joho/godotenv"
 
 	"github.com/gin-contrib/cors"
 
 	"github.com/rahul-cse/research-summary/pdf"
 
 	"github.com/rahul-cse/research-summary/text"
+
+	"github.com/rahul-cse/research-summary/llm"
 )
 
 func main() {
@@ -22,6 +28,19 @@ func main() {
 		AllowMethods: []string{"GET", "POST", "OPTIONS"},
 		AllowHeaders: []string{"Origin", "Content-Type"},
 	}))
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Error loading .env")
+	}
+
+	key := os.Getenv("GEMINI_API_KEY")
+
+	if key == "" {
+		log.Fatal("GEMINI_API_KEY is not set")
+	}
+
+	log.Println("Gemini API key loaded successfully")
 
 	router.POST("/upload", func(c *gin.Context) {
 
@@ -56,10 +75,22 @@ func main() {
 
 		cleanedText := text.Clean(rawText)
 
+		result, err := llm.AnalyzeText(cleanedText)
+
+		if err != nil {
+			log.Println("Gemini analysis error:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Could not analyze the research paper",
+			})
+			return
+		}
+
+		log.Println("Gemini response:", result.Domain)
+
 		c.JSON(http.StatusOK, gin.H{
 			"message":  "File uploaded successfully",
 			"filename": file.Filename,
-			"text":     cleanedText,
+			"text":     result,
 		})
 	})
 

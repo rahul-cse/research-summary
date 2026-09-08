@@ -5,7 +5,7 @@ import { ChangeEvent, useState } from "react";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
-  const [text, setText] = useState("");
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -14,7 +14,7 @@ export default function Home() {
     const selectedFile = e.target.files?.[0] ?? null;
 
     setFile(selectedFile);
-    setText("");
+    setAnalysis(null);
     setError("");
   };
 
@@ -27,7 +27,7 @@ export default function Home() {
 
     setLoading(true);
     setError("");
-    setText("");
+    setAnalysis(null);
 
     // FormData is used because we are uploading a file
     const formData = new FormData();
@@ -45,8 +45,10 @@ export default function Home() {
         throw new Error(data.error || "Upload failed");
       }
 
-      // Get cleaned text returned by Go backend
-      setText(data.text);
+      // Get summarized text returned by Go backend
+      setAnalysis(data.text);
+      console.log(analysis)
+
     } catch (err) {
       setError(
         err instanceof Error
@@ -114,15 +116,54 @@ export default function Home() {
         </div>
         </div>
         {/* Extracted text */}
-        {text && (
+        {analysis && (
           <section className="mt-8">
 
             <h2 className="mb-3 text-xl font-semibold">
-              Extracted Text
+              Paper Summary
             </h2>
 
             <div className="max-h-[600px] overflow-y-auto whitespace-pre-wrap rounded-lg border bg-gray-50 p-5 text-sm leading-7">
-              {text}
+                <div className="mb-6">
+                  <h3 className="mb-2 font-semibold">
+                    Research Domain
+                  </h3>
+
+                  <div className="flex flex-wrap gap-2">
+                    {
+                      analysis.domain.map((item)=> <span key={item} className="rounded-full bg-white px-3 py-1 text-sm border">
+                      {item} </span>)
+                    }
+                    
+                  </div>
+                  <h3 className="mb-2 font-semibold">
+                    Methods
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                      {analysis.methods.map((item) => (
+                      <span key={item} className="rounded-full bg-white px-3 py-1 text-sm border">
+                      {item} </span>
+                      ))}
+                  </div>
+
+                  <h3 className="mb-2 font-semibold">
+                    Study Application
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                      {analysis.study_application.map((item) => (
+                      <span key={item} className="rounded-full bg-white px-3 py-1 text-sm border">
+                      {item} </span>
+                      ))}
+                  </div>
+
+                  <h3 className="mb-2 font-semibold">
+                    Summary
+                  </h3>
+                  <div>
+                    {analysis.summary}
+                  </div>
+                </div>
+            
             </div>
 
           </section>
